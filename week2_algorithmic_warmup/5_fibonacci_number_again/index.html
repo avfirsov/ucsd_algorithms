@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const getPeriod = (m) => {
+        const fibMods = [0, 1];
+        let i = 2;
+        let expectInd = 0;
+        let next;
+        while (i < 1000) {
+          next = (fibMods[i - 1] + fibMods[i - 2]) % m;
+          fibMods[i] = next;
+          if (next == fibMods[expectInd]) {
+            if (expectInd == fibMods.length / 2 - 1) {
+              return fibMods.slice(0, expectInd + 1);
+            } else {
+              expectInd++;
+            }
+          } else {
+            expectInd = 0;
+          }
+          i++;
+        }
+      };
+    </script>
+  </body>
+</html>

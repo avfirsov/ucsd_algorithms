@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      function max(count, capacity, values, weights) {
+        const items = weights
+          .map((weight, i) => ({ unitValue: values[i] / weight, weight }))
+          .sort((a, b) => b.unitValue - a.unitValue);
+        let result = 0;
+
+        while (capacity > 0) {
+          const item = items[0];
+          const nextWeight = Math.min(item.weight, capacity);
+          capacity -= nextWeight;
+          item.weight -= nextWeight;
+          result += nextWeight * item.unitValue;
+          if (item.weight == 0) items.shift();
+        }
+
+        return result.toFixed(3);
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+
+      // const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      // const getRandomBool = () => Boolean(getRandomInt(0, 100) >= 50);
+      // const getRandomElem = (arr) => arr[getRandomInt(0, arr.length - 1)];
+
+      var assert = chai.assert;
+
+      describe('max', function () {
+        it('simplest test', function () {
+          assert.equal(max(3, 50, [60, 100, 120], [20, 50, 30]), '180.000');
+        });
+      });
+      mocha.run();
+    </script>
+  </body>
+</html>

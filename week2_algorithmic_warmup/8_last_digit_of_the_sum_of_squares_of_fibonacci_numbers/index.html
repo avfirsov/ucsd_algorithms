@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      
+
+      function getFibMod(n, m) {
+        const period = getPeriod(m);
+        const len = period.length;
+        return period[n % len];
+      }
+
+      const getPeriod = (m) => {
+        const fibMods = [0, 1];
+        let i = 2;
+        let expectInd = 0;
+        let next;
+        while (true) {
+          next = (fibMods[i - 1] + fibMods[i - 2]) % m;
+          fibMods[i] = next;
+          if (next == fibMods[expectInd]) {
+            if (expectInd == fibMods.length / 2 - 1) {
+              return fibMods.slice(0, expectInd + 1);
+            } else {
+              expectInd++;
+            }
+          } else {
+            expectInd = 0;
+          }
+          i++;
+        }
+      };
+    </script>
+    <script>
+      mocha.setup('bdd');
+
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const getRandomBool = () => Boolean(getRandomInt(0, 100) >= 50);
+      const getRandomElem = (arr) => arr[getRandomInt(0, arr.length - 1)];
+
+      var assert = chai.assert;
+
+      describe('Fib with flushing', function () {
+        it('first test', function () {
+          assert.equal(fib(10), fibByLastDigits(10));
+        });
+      });
+
+      function assertRandomTest(rand) {
+        it(rand + '', function () {
+          assert.equal(fib(rand), fibByLastDigits(rand));
+        });
+      }
+
+      describe('Random tests for simpleErrors', function () {
+        for (let i = 0; i < 10; i++) {
+          const rand = getRandomInt(1, 100);
+          assertRandomTest(rand);
+        }
+      });
+      mocha.run();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      const getDistance = (a) => (b) => Math.abs(a - b);
+
+      function partition(divideBetween, values) {
+        if (values.length < 3) return false;
+        let numbers = values.slice().sort((a, b) => a - b);
+        const eachShouldTake = values.reduce((r, c) => r + c) / divideBetween;
+        if (Math.floor(eachShouldTake) != eachShouldTake) return false;
+        return Array.from({ length: divideBetween })
+          .fill(1)
+          .reduce((r, c) => {
+            const knapsacked = knapsack(eachShouldTake, numbers, numbers);
+            if (!r) return false;
+            if (knapsacked.maxWeight == eachShouldTake) {
+              let i = 0;
+              const takenIndxs = knapsacked.items;
+              numbers = numbers.filter((number, ind) => ind != takenIndxs[i] || (i++, false));
+              return true;
+            } else return false;
+          }, true);
+      }
+
+      function knapsack(W, w, v) {
+        const len = w.length;
+        const D = Array.from({ length: len + 1 }).map((v, i) =>
+          Array.from({ length: W + 1 }).map((v, j) => {
+            if (i == 0) return 0;
+            if (j == 0) return 0;
+          })
+        );
+
+        for (let i = 1; i <= len; i++) {
+          for (let j = 1; j <= W; j++) {
+            D[i][j] = Math.max(D[i - 1][j - w[i - 1]] + v[i - 1] || 0, D[i - 1][j]);
+          }
+        }
+
+        const items = [];
+        let i = len;
+        let j = W;
+        let current = D[i][j];
+        while (current > 0) {
+          if (current == D[i - 1][j - w[i - 1]] + v[i - 1]) {
+            items.push(i - 1);
+            j -= w[i - 1];
+            i--;
+          } else {
+            i--;
+          }
+          current = D[i][j];
+        }
+        items.reverse();
+
+        return { maxWeight: D[len][W], items, values: items.map((ind) => v[ind]) };
+      }
+
+      function partitionViaPredef(divideBetween, values) {
+        if (values.length < 3) return false;
+        let numbers = values.slice().sort((a, b) => a - b);
+        const eachShouldTake = values.reduce((r, c) => r + c) / divideBetween;
+        if (Math.floor(eachShouldTake) != eachShouldTake) return false;
+        return Array.from({ length: divideBetween })
+          .fill(1)
+          .reduce((r, c) => {
+            const knapsacked = knapsackToPredefined(eachShouldTake * divideBetween, eachShouldTake, numbers, numbers);
+            if (!r) return false;
+            if (knapsacked.maxWeight == eachShouldTake) {
+              let i = 0;
+              const takenIndxs = knapsacked.items;
+              numbers = numbers.filter((number, ind) => ind != takenIndxs[i] || (i++, false));
+              return true;
+            } else return false;
+          }, true);
+      }
+
+      function knapsackToPredefined(W, V, w, v) {
+        const len = w.length;
+        const D = Array.from({ length: len + 1 }).map((v, i) =>
+          Array.from({ length: W + 1 }).map((v, j) => {
+            if (i == 0) return 0;
+            if (j == 0) return 0;
+          })
+        );
+
+        const S = Array.from({ length: len + 1 }).map((v, i) =>
+          Array.from({ length: W + 1 }).map((v, j) => {
+            if (i == 0) return 0;
+            if (j == 0) return 0;
+          })
+        );
+
+        const distanceFromV = getDistance(V);
+
+        for (let i = 1; i <= len; i++) {
+          for (let j = 1; j <= W; j++) {
+            const sumIfTaken = S[i - 1][j - w[i - 1]] + v[i - 1] || 0;
+            const sumIfNotTaken = S[i - 1][j];
+            const sumIfIgnored = S[i][j - 1];
+            S[i][j] = [sumIfTaken, sumIfNotTaken, sumIfIgnored]
+              .filter((val) => val <= V)
+              .reduce((r, c) => (distanceFromV(c) < distanceFromV(r) ? c : r), Infinity);
+            D[i][j] = distanceFromV(S[i][j]);
+          }
+        }
+
+        const items = [];
+        let i = len;
+        let j = W;
+        let current = S[i][j];
+        while (current > 0) {
+          if (current == S[i][j - 1]) {
+            j--;
+          } else if (current == S[i - 1][j - w[i - 1]] + v[i - 1]) {
+            items.push(i - 1);
+            j -= w[i - 1];
+            i--;
+          } else {
+            i--;
+          }
+          current = S[i][j];
+        }
+        items.reverse();
+
+        return { maxWeight: S[len][W], items, values: items.map((ind) => v[ind]) };
+      }
+
+      function knapsackToPredefinedMul(W, V, w, v) {
+        const len = w.length;
+        const D = Array.from({ length: len + 1 }).map((v, i) =>
+          Array.from({ length: W + 1 }).map((v, j) => {
+            if (i == 0) return 1;
+            if (j == 0) return 1;
+          })
+        );
+
+        const S = Array.from({ length: len + 1 }).map((v, i) =>
+          Array.from({ length: W + 1 }).map((v, j) => {
+            if (i == 0) return 1;
+            if (j == 0) return 1;
+          })
+        );
+
+        const distanceFromV = getDistance(V);
+
+        for (let i = 1; i <= len; i++) {
+          for (let j = 1; j <= W; j++) {
+            const sumIfTaken = (Number.isInteger(j / w[i - 1]) && S[i - 1][j / w[i - 1]] * v[i - 1]) || 0;
+            const sumIfNotTaken = S[i - 1][j];
+            const sumIfIgnored = S[i][j - 1];
+            S[i][j] = [sumIfTaken, sumIfNotTaken, sumIfIgnored]
+              .filter((val) => val <= V)
+              .reduce((r, c) => (distanceFromV(c) < distanceFromV(r) ? c : r), Infinity);
+            D[i][j] = distanceFromV(S[i][j]);
+          }
+        }
+
+        const items = [];
+        let i = len;
+        let j = W;
+        let current = S[i][j];
+        while (current > 1) {
+          if (current == S[i][j - 1]) {
+            j--;
+          } else if (Number.isInteger(j / w[i - 1]) && current == S[i - 1][j / w[i - 1]] * v[i - 1]) {
+            items.push(i - 1);
+            j = j / w[i - 1];
+            i--;
+          } else {
+            i--;
+          }
+          current = S[i][j];
+        }
+        items.reverse();
+
+        return { maxWeight: S[len][W], items, values: items.map((ind) => v[ind]) };
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+      describe('partition simple tests', function () {
+        it('Should give true for [17, 59, 34, 57, 17, 23, 67, 1, 18, 2, 59]', function () {
+          assert.isTrue(partition(3, [17, 59, 34, 57, 17, 23, 67, 1, 18, 2, 59]));
+        });
+        it('Should give true for [1, 2, 3, 4, 5, 5, 7, 7, 8, 10, 12, 19, 25]', function () {
+          assert.isTrue(partition(3, [1, 2, 3, 4, 5, 5, 7, 7, 8, 10, 12, 19, 25]));
+        });
+        it('Should give false for [3, 3, 3, 3]', function () {
+          assert.isFalse(partition(3, [3, 3, 3, 3]));
+        });
+        it('Should give false for [40]', function () {
+          assert.isFalse(partition(3, [40]));
+        });
+        it('Should give false for [20, 9, 13, 27, 25, 7, 2, 9, 17, 15]', function () {
+          assert.isFalse(partition(3, [20, 9, 13, 27, 25, 7, 2, 9, 17, 15]));
+        });
+      });
+
+      describe('partitionViaPredef simple tests', function () {
+        it('Should give true for [17, 59, 34, 57, 17, 23, 67, 1, 18, 2, 59]', function () {
+          assert.isTrue(partitionViaPredef(3, [17, 59, 34, 57, 17, 23, 67, 1, 18, 2, 59]));
+        });
+        it('Should give true for [1, 2, 3, 4, 5, 5, 7, 7, 8, 10, 12, 19, 25]', function () {
+          assert.isTrue(partitionViaPredef(3, [1, 2, 3, 4, 5, 5, 7, 7, 8, 10, 12, 19, 25]));
+        });
+        it('Should give false for [3, 3, 3, 3]', function () {
+          assert.isFalse(partitionViaPredef(3, [3, 3, 3, 3]));
+        });
+        it('Should give false for [40]', function () {
+          assert.isFalse(partitionViaPredef(3, [40]));
+        });
+        it('Should give false for [20, 9, 13, 27, 25, 7, 2, 9, 17, 15]', function () {
+          assert.isFalse(partitionViaPredef(3, [20, 9, 13, 27, 25, 7, 2, 9, 17, 15]));
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>

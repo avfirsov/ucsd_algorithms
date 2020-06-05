@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      // const mul = (a) => (b) => a * b;
+      // const add = (a) => (b) => a * b;
+
+      // const mul2 = mul(2);
+      // const mul3 = mul(3);
+      // const add1 = add(1);
+
+      const divide = (a) => (b) => b / a;
+      const substract = (a) => (b) => b - a;
+
+      const divideBy2 = divide(2);
+      const divideBy3 = divide(3);
+      const substract1 = substract(1);
+
+      function calc(value) {
+        return calcMinOps(value, divideBy2, divideBy3, substract1);
+      }
+
+      function calcMinOps(value, ...ops) {
+        const T = [0, 0];
+        const prevs = [0, 0];
+        let i = 2;
+        for (; i <= value; i++) {
+          T[i] = ops.reduce((r, curOp) => {
+            const prev = curOp(i);
+            const curOpRes = T[prev] + 1;
+            if (r > curOpRes) {
+              prevs[i] = prev;
+              return curOpRes;
+            } else return r;
+          }, Infinity);
+        }
+        let seq = [];
+        let j = prevs.length - 1;
+        while (prevs[j] > 0) {
+          seq.push(prevs[j]);
+          j = prevs[j];
+        }
+        seq.reverse();
+        seq.push(value);
+        return `${T[--i]}\n${seq.join(' ')}`;
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+
+      describe('calc simple tests', function () {
+        it('Should give 0\n1 for 2', function () {
+          assert.equal(calc(1), '0\n1');
+        });
+
+        it('Should give 3-1 2 4 5 for 5', function () {
+          assert.equal(calc(5), '3\n1 2 4 5');
+        });
+
+        it('Should give 2-1 3 9 for 9', function () {
+          assert.equal(calc(9), '2\n1 3 9');
+        });
+
+        it('Should give 3-1 3 6 12 for 12', function () {
+          assert.equal(calc(12), '3\n1 3 6 12');
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>

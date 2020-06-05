@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      function hasMajority(arr) {
+        const pieceFrom = (arr) => ({
+          data: arr,
+          majorEl: arr[0],
+          majorElCount: 1,
+        });
+
+        const helper = (arr) => {
+          if (arr.length > 1) {
+            return combine(...splitArrIntoTwoEqualParts(arr).map(helper));
+          } else return pieceFrom(arr);
+        };
+
+        return Boolean(helper(arr).majorEl);
+      }
+
+      function combine(piece1, piece2) {
+        piece1.oppositePiece = piece2;
+        piece2.oppositePiece = piece1;
+        const dataCombined = piece1.data.concat(piece2.data);
+        const totalElCount = dataCombined.length;
+        const combinedResult = [piece1, piece2]
+          .filter((piece) => piece.majorEl)
+          .find((piece) => {
+            const majorElCountCombined = countItemInArr(piece.majorEl, piece.oppositePiece.data) + piece.majorElCount;
+            if (majorElCountCombined * 2 > totalElCount) {
+              piece.majorElCount = majorElCountCombined;
+              piece.data = dataCombined;
+              return true;
+            } else return false;
+          });
+
+        return combinedResult || { data: dataCombined, majorEl: undefined, majorElCount: 0 };
+      }
+
+      function countItemInArr(needle, arr) {
+        return arr.reduce((r, c) => (c == needle ? r + 1 : r), 0);
+      }
+
+      function splitArrIntoTwoEqualParts(arr) {
+        const left = arr.splice(0, Math.floor(arr.length / 2));
+        return [left, arr];
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+
+      // const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      // const getRandomIntExcept = (min, max, exceptions) => {
+      //   let result;
+      //   while (true) {
+      //     result = getRandomInt(min, max);
+      //     if (!exceptions.includes(result)) return result;
+      //   }
+      // };
+      // const getRandomBool = () => Boolean(getRandomInt(0, 100) >= 50);
+      // // const getRandomElem = (arr) => arr[getRandomInt(0, arr.length - 1)];
+
+      // const getRandomArr = (minLen, maxLen, minVal, maxVal) =>
+      //   Array.from({ length: getRandomInt(minLen, maxLen) }).map((v, k, arr) =>
+      //     getRandomIntExcept(minVal, maxVal, arr)
+      //   );
+
+      // function assertRandomTest(randArr) {
+      //   const result = getRandomBool();
+      //   const randInd = getRandomInt(0, randArr.length - 1);
+      //   const nonExistingInt = getRandomIntExcept(-100, 100, randArr);
+      //   const msg =
+      //     'binarySearch in ' +
+      //     randArr
+      //       .join(',')
+      //       .concat(
+      //         result ? ` should return ${randInd} for ${randArr[randInd]}` : ` should return -1 for ${nonExistingInt}`
+      //       );
+      //   it(msg, function () {
+      //     if (result) {
+      //       assert.equal(binarySearch(randArr, randArr[randInd]), randInd);
+      //     } else {
+      //       assert.equal(binarySearch(randArr, nonExistingInt), -1);
+      //     }
+      //   });
+      // }
+
+      var assert = chai.assert;
+
+      // const notEqualToNext = (v, i, arr) => v != arr[i + 1];
+
+      // describe('BinarySearch Stress test', function () {
+      //   for (let i = 0; i < 1000; i++) {
+      //     const randArr = getRandomArr(10, 100, -1000, 1000)
+      //       .sort((a, b) => a - b)
+      //       .filter(notEqualToNext);
+      //     assertRandomTest(randArr);
+      //   }
+      //   afterEach(function () {
+      //     if (this.currentTest.state === 'failed') {
+      //       console.error(this);
+      //     }
+      //   });
+      // });
+
+      describe('hasMajority simple tests', function () {
+        it('Should be true for [2,3,5,2,2,2]', function () {
+          assert.isTrue(hasMajority([2, 3, 5, 2, 2, 2]));
+        });
+        it('Should be false for [3,3,3,2,2,2]', function () {
+          assert.isFalse(hasMajority([3, 3, 3, 2, 2, 2]));
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>

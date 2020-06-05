@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      const partition3 = (arr, left, right) => {
+        const pivotEl = arr[left];
+        let k = left;
+        let j = left;
+        for (let i = left + 1; i <= right; i++) {
+          if (arr[i].x <= pivotEl.x) {
+            j++;
+            swap(arr, j, i);
+            if (arr[j].x < pivotEl.x) {
+              k++;
+              swap(arr, j, k);
+            }
+          }
+        }
+        swap(arr, left, k);
+        return [k, j];
+      };
+
+      const quickSort3 = (arr = [], left = 0, right = arr.length - 1) => {
+        while (left < right) {
+          const k = getRandomInt(left, right);
+          swap(arr, left, k);
+          const [leftPivotInd, rigthPivotInd] = partition3(arr, left, right);
+          if (leftPivotInd - left < right - rigthPivotInd) {
+            quickSort3(arr, left, leftPivotInd - 1);
+            left = rigthPivotInd + 1;
+          } else {
+            quickSort3(arr, rigthPivotInd + 1, right);
+            right = leftPivotInd - 1;
+          }
+        }
+        return arr;
+      };
+
+      const createPointFromArray = (arr) => ({
+        x: arr[0],
+        y: arr[1],
+      });
+
+      const getDistance = (point1, point2) =>
+        console.log('(point1, point2)', point1, point2) ||
+        Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
+
+      const getMaxEl = (arr) => arr.reduce((r, c) => (r < c ? c : r), -Infinity);
+      const getMinEl = (arr) => arr.reduce((r, c) => (r > c ? c : r), Infinity);
+      const getXCoord = (points) => points.map((point) => point.x);
+
+      const mergeSorted = (arr1, arr2) => {
+        let i = 0,
+          j = 0;
+        const len1 = arr1.length;
+        const len2 = arr2.length;
+        let merged = [];
+        while (i < len1 && j < len2) {
+          arr1[i].y === arr2[j].y
+            ? merged.push(arr1[i++], arr2[j++])
+            : arr1[i].y < arr2[j].y
+            ? merged.push(arr1[i++])
+            : merged.push(arr2[j++]);
+        }
+
+        while (i < len1) {
+          merged.push(arr1[i++]);
+        }
+
+        while (j < len2) {
+          merged.push(arr2[j++]);
+        }
+        return merged;
+      };
+
+      const areCloser = (epsilon, num1) => (point) => Math.abs(num1 - point.x) < epsilon;
+
+      const getMinDistance = (segment1, segment2, mergedPoints) => {
+        console.log('getMinDistance -> segment1, segment2', segment1, segment2);
+        const borderX = (segment2.leftX + segment1.rightX) / 2;
+        console.warn('getMinDistance -> borderX', borderX);
+
+        const points1 = segment1.points;
+        const points2 = segment2.points;
+        console.log('getMinDistance -> points1[0], points2[0]', points1[0], points2[0]);
+        if (points1.length * points2.length == 1) return getDistance(points1[0], points2[0]);
+        const d = Math.min(
+          // segment1.minDistance, segment2.minDistance);
+          segment1.points.length > 1 ? segment1.minDistance : Infinity,
+          segment2.points.length > 1 ? segment2.minDistance : Infinity
+        );
+        console.log('getMinDistance -> d', d);
+        const areCloserToBorderThanD = areCloser(d, borderX);
+        const filteredMerged = mergedPoints.filter(areCloserToBorderThanD);
+        console.log("getMinDistance -> filteredMerged", filteredMerged)
+        const minDistanceNearBorder = filteredMerged.reduce((r, currentPoint, i, arr) => {
+        console.log("getMinDistance -> r, currentPoint, i, arr", r, currentPoint, i, arr)
+          let smallestDistance = Infinity;
+          const toInd = Math.min(i + 8, arr.length);
+          for (let j = i + 1; j < toInd; j++) {
+            smallestDistance = Math.min(smallestDistance, getDistance(currentPoint, arr[j]));
+          }
+          return r > smallestDistance ? smallestDistance : r;
+        }, Infinity);
+
+        // const filteredMerged =
+        // const points1 = segment1.points;
+        // const points2 = segment2.points;
+        // console.log('getMinDistance -> points1[0], points2[0]', points1[0], points2[0]);
+        // if (points1.length * points2.length == 1) return getDistance(points1[0], points2[0]);
+        // const d = Math.min(
+        //   // segment1.minDistance, segment2.minDistance);
+        //   segment1.points.length > 1 ? segment1.minDistance : Infinity,
+        //   segment2.points.length > 1 ? segment2.minDistance : Infinity
+        // );
+        // console.log('getMinDistance -> d', d);
+        // const areCloserToBorderThanD = areCloser(d, borderX);
+        // const pointsNearBorder = [points1.filter(areCloserToBorderThanD), points2.filter(areCloserToBorderThanD)];
+        // console.log('getMinDistance -> pointsNearBorder', pointsNearBorder);
+        // if (pointsNearBorder[0].length * pointsNearBorder[1].length == 0) return d;
+        // console.log('getMinDistance -> pointsNearBorder', pointsNearBorder);
+        // const dividedIntoSquares = splitToSquares(...pointsNearBorder, d);
+        // //убираем пары квадратов, где по одну из сторон нет ни одной точки
+        // const filteredDividedIntoSquares = dividedIntoSquares.filter(
+        //   (twoSquares) => twoSquares[0].length * twoSquares[1].length
+        // );
+        // console.log('getMinDistance -> filteredDividedIntoSquares', filteredDividedIntoSquares);
+        // //находим самое маленькое расстояние между пограничными точками
+        // //итерация по парам квадратов
+        // const minDistanceNearBorder = filteredDividedIntoSquares.reduce((r, twoSquares) => {
+        //   //итерация по точкам первого квадрата
+        //   const lowestDistanceBetweenSquares = twoSquares[0].reduce((r, pointFromFirstSquare) => {
+        //     //итерация по точкам второго квадрата
+        //     const lowestForCurrentPoint = twoSquares[1].reduce((r, pointFromSecondSquare) => {
+        //       const distance = getDistance(pointFromFirstSquare, pointFromSecondSquare);
+        //       return r > distance ? distance : r;
+        //     }, Infinity);
+        //     return r > lowestForCurrentPoint ? lowestForCurrentPoint : r;
+        //   }, Infinity);
+        //   return r > lowestDistanceBetweenSquares ? lowestDistanceBetweenSquares : r;
+        // }, Infinity);
+
+        return Math.min(d, minDistanceNearBorder);
+      };
+
+      const splitToSquares = (arr1, arr2, d) => {
+        console.log('splitToSquares -> arr1, arr2, d', arr1, arr2, d);
+        let i = 0;
+        let j = 0;
+        const len1 = arr1.length;
+        const len2 = arr2.length;
+        let split = [];
+        let square = [[], []];
+        split.push(square);
+        let lastSquareTopBorder = Math.min(arr1[0].y, arr2[0].y);
+        while (i < len1 && j < len2) {
+          const [nextPoint, squareInd] = arr1[i].y > arr2[j].y ? [arr2[j++], 1] : [arr1[i++], 0];
+          console.log('main while loop splitToSquares -> nextPoint', nextPoint);
+          if (nextPoint.y - lastSquareTopBorder < d) {
+            console.log('splitToSquares -> nextPoint - lastSquareTopBorder < d', nextPoint.y - lastSquareTopBorder < d);
+            square[squareInd].push(nextPoint);
+          } else {
+            square = [[], []];
+            split.push(square);
+            lastSquareTopBorder = nextPoint.y;
+            square[squareInd].push(nextPoint);
+          }
+        }
+
+        while (i < len1) {
+          const nextPoint = arr1[i++];
+          console.log('while loop for i splitToSquares -> nextPoint', nextPoint);
+          if (nextPoint.y - lastSquareTopBorder < d) {
+            square[0].push(nextPoint);
+          } else {
+            break;
+          }
+        }
+
+        while (j < len2) {
+          const nextPoint = arr2[j++];
+          console.log('while loop for j -> nextPoint', nextPoint);
+          if (nextPoint.y - lastSquareTopBorder < d) {
+            square[1].push(nextPoint);
+          } else {
+            break;
+          }
+        }
+        console.log('splitToSquares -> split', split);
+        return split;
+      };
+
+      const createSegmentFromPoint = (point) => ({
+        points: [point],
+        minDistance: 0,
+        leftX: point.x,
+        rightX: point.x,
+      });
+
+      const wrapper = (points) => closest(points.map(createPointFromArray));
+
+      function closest(points) {
+        const x_sorted = quickSort3(points);
+        console.log('closest -> x_sorted', freeze(x_sorted));
+
+        const helper = (points) => {
+          console.log('helper -> points', points);
+          const half = Math.floor(points.length / 2);
+          if (points.length > 1) {
+            return mergeSegments(helper(points.slice(0, half)), helper(points.slice(half)));
+          } else {
+            return createSegmentFromPoint(points[0]);
+          }
+        };
+
+        const mergeSegments = (segment1, segment2) => {
+          console.log('closest -> segment1, segment2', segment1, segment2);
+          const mergePoints = mergeSorted(segment1.points, segment2.points);
+          return {
+            points: mergePoints,
+            minDistance: getMinDistance(segment1, segment2, mergePoints),
+            //maybe Math.min may be ommited cause points (=> and segments) are already x-sorted
+            leftX: Math.min(segment1.leftX, segment2.leftX),
+            rightX: Math.max(segment1.rightX, segment2.rightX),
+          };
+        };
+
+        const result = helper(x_sorted);
+        console.log('mergeSegments -> result', result);
+        return result.minDistance.toFixed(4);
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+
+      // describe('splitToSquares simple tests', function () {
+      //   it(`Should work for [{ y: 1 }, { y: 2 }, { y: 3 }, { y: 4 }, { y: 5 }, { y: 6 }], [{ y: 1.5 }, { y: 2.5 }, { y: 3.5 }, { y: 4.5 }, { y: 5.5 }],1`, function () {
+      //     assert.deepEqual(
+      //       splitToSquares(
+      //         [{ y: 1 }, { y: 2 }, { y: 3 }, { y: 4 }, { y: 5 }, { y: 6 }],
+      //         [{ y: 1.5 }, { y: 2.5 }, { y: 3.5 }, { y: 4.5 }, { y: 5.5 }],
+      //         1
+      //       ),
+      //       [
+      //         [[{ y: 1 }], [{ y: 1.5 }]],
+      //         [[{ y: 2 }], [{ y: 2.5 }]],
+      //         [[{ y: 3 }], [{ y: 3.5 }]],
+      //         [[{ y: 4 }], [{ y: 4.5 }]],
+      //         [[{ y: 5 }], [{ y: 5.5 }]],
+      //       ]
+      //     );
+      //   });
+
+      //   it(`Should work for [[{ x: 7, y: 7 }],[{ x: 7, y: 7 },{ x: 4, y: 8 },],],3`, function () {
+      //     assert.deepEqual(
+      //       splitToSquares(
+      //         [{ x: 7, y: 7 }],
+      //         [
+      //           { x: 7, y: 7 },
+      //           { x: 4, y: 8 },
+      //         ],
+      //         3
+      //       ),
+      //       [
+      //         [
+      //           [{ x: 7, y: 7 }],
+      //           [
+      //             { x: 7, y: 7 },
+      //             { x: 4, y: 8 },
+      //           ],
+      //         ],
+      //       ]
+      //     );
+      //   });
+      // });
+
+      describe('wrapper simple tests', function () {
+        it(`Should give 5 for [[0, 0],[3, 4]];`, function () {
+          assert.equal(
+            wrapper([
+              [0, 0],
+              [3, 4],
+            ]),
+            5
+          );
+        });
+
+        it(`Should give 0 for [[7, 7],[1, 100],[4, 8],[7, 7]];`, function () {
+          assert.equal(
+            wrapper([
+              [7, 7],
+              [1, 100],
+              [4, 8],
+              [7, 7],
+            ]),
+            0.0
+          );
+        });
+
+        it(`Should give 1.4 for [4, 4], [-2, -2], [-3, -4], [-1, 3], [2, 3], [-4, 0], [1, 1], [-1, -1], [3, -1], [-4, 2], [-2, 4]`, function () {
+          assert.equal(
+            wrapper([
+              [4, 4],
+              [-2, -2],
+              [-3, -4],
+              [-1, 3],
+              [2, 3],
+              [-4, 0],
+              [1, 1],
+              [-1, -1],
+              [3, -1],
+              [-4, 2],
+              [-2, 4],
+            ]),
+            1.4142
+          );
+        });
+
+        it(`Should give 2.8284 for [[0, 0],[5, 6],[3, 4],[7, 2]]`, function () {
+          assert.equal(
+            wrapper([
+              [0, 0],
+              [5, 6],
+              [3, 4],
+              [7, 2],
+            ]),
+            2.8284
+          );
+        });
+      });
+      mocha.run();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      function binarySearch(arr = [], key) {
+        let left = 0;
+        let right = arr.length - 1;
+        let pivot;
+        while (left != right && left < right) {
+          pivot = left + Math.floor((right - left) / 2);
+          switch (Math.sign(arr[pivot] - key)) {
+            case -1:
+              toRight();
+              continue;
+            case 0:
+              return pivot;
+            case 1:
+              toLeft();
+              continue;
+          }
+        }
+
+        function toRight() {
+          left = pivot + 1;
+        }
+
+        function toLeft() {
+          right = pivot - 1;
+        }
+
+        return arr[left] == key ? left : -1;
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const getRandomIntExcept = (min, max, exceptions) => {
+        let result;
+        while (true) {
+          result = getRandomInt(min, max);
+          if (!exceptions.includes(result)) return result;
+        }
+      };
+      const getRandomBool = () => Boolean(getRandomInt(0, 100) >= 50);
+      // const getRandomElem = (arr) => arr[getRandomInt(0, arr.length - 1)];
+
+      const getRandomArr = (minLen, maxLen, minVal, maxVal) =>
+        Array.from({ length: getRandomInt(minLen, maxLen) }).map((v, k, arr) =>
+          getRandomIntExcept(minVal, maxVal, arr)
+        );
+
+      function assertRandomTest(randArr) {
+        const result = getRandomBool();
+        const randInd = getRandomInt(0, randArr.length - 1);
+        const nonExistingInt = getRandomIntExcept(-100, 100, randArr);
+        const msg =
+          'binarySearch in ' +
+          randArr
+            .join(',')
+            .concat(
+              result ? ` should return ${randInd} for ${randArr[randInd]}` : ` should return -1 for ${nonExistingInt}`
+            );
+        it(msg, function () {
+          if (result) {
+            assert.equal(binarySearch(randArr, randArr[randInd]), randInd);
+          } else {
+            assert.equal(binarySearch(randArr, nonExistingInt), -1);
+          }
+        });
+      }
+
+      var assert = chai.assert;
+
+      const notEqualToNext = (v, i, arr) => v != arr[i + 1];
+
+      describe('BinarySearch Stress test', function () {
+        for (let i = 0; i < 1000; i++) {
+          const randArr = getRandomArr(10, 100, -1000, 1000)
+            .sort((a, b) => a - b)
+            .filter(notEqualToNext);
+          assertRandomTest(randArr);
+        }
+        afterEach(function () {
+          if (this.currentTest.state === 'failed') {
+            console.error(this);
+          }
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>

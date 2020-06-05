@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const fibPart = (m, n) => {
+        if (m == n) return fib(m) % 10;
+        return lastDigitByLastDigits(lastDigitOfSum(n), lastDigitOfSum(m - 1));
+      };
+
+      const lastDigitByLastDigits = (a, b) => {
+        const difference = a - b;
+        return difference >= 0 ? difference : difference + 10;
+      };
+
+      const lastDigitOfSum = (n) => {
+        return lastDigitByLastDigits(fibLastDigit(n + 2), 1);
+      };
+
+      const fibLastDigit = (n) => {
+        const memo = [0, 1, 1];
+        let i = 3;
+        for (; i <= n; i++) {
+          memo[i] = (memo[i - 1] + memo[i - 2]) % 10;
+        }
+        return memo[n];
+      };
+
+      const fib = (n) => {
+        const memo = [0, 1, 1];
+        let i = 3;
+        for (; i <= n; i++) {
+          memo[i] = memo[i - 1] + memo[i - 2];
+        }
+        return memo[n];
+      };
+    </script>
+  </body>
+</html>

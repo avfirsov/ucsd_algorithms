@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      const SEGMENT_START = 'SEGMENT_START';
+      const SEGMENT_END = 'SEGMENT_END';
+      const POINT = 'POINT';
+
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const getSegmentStartingPoint = (value) => ({
+        type: SEGMENT_START,
+        value,
+      });
+
+      const getSegmentEndingPoint = (value) => ({
+        type: SEGMENT_END,
+        value,
+      });
+
+      const getPoint = (value, index) => ({
+        type: POINT,
+        index,
+        value,
+      });
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      function countIntersectionsWrapper(beginnings, endings, points) {
+        const allPoints = beginnings
+          .map(getSegmentStartingPoint)
+          .concat(endings.map(getSegmentEndingPoint), points.map(getPoint));
+        return countIntersections(allPoints);
+      }
+
+      function countIntersections(allPoints) {
+        console.log('countIntersections -> allPoints', freeze(allPoints));
+        const sorted = quickSort3(allPoints);
+        return countIntersectionsInSortedArr(sorted).join(' ');
+      }
+
+      const countIntersectionsInSortedArr = (arr) => {
+        let result = [];
+        let activeSegmentsCount = 0;
+        arr.forEach((point) => {
+          if (point.type == SEGMENT_START) {
+            activeSegmentsCount++;
+            return;
+          }
+          if (point.type == SEGMENT_END) {
+            activeSegmentsCount--;
+            return;
+          }
+          if (point.type == POINT) {
+            result[point.index] = activeSegmentsCount;
+            return;
+          }
+        });
+        return result;
+      };
+
+      const partition3 = (arr, left, right) => {
+        const pivotEl = arr[left];
+        let k = left;
+        let j = left;
+        for (let i = left + 1; i <= right; i++) {
+          if (arr[i].value <= pivotEl.value) {
+            j++;
+            swap(arr, j, i);
+            if (arr[j].value < pivotEl.value) {
+              k++;
+              swap(arr, j, k);
+            }
+          }
+        }
+        swap(arr, left, k);
+        let lastBeginningInd = k - 1;
+        let lastPointInd = k - 1;
+        for (let m = k; m <= j; m++) {
+          if (arr[m].type != SEGMENT_END) {
+            lastPointInd++;
+            swap(arr, m, lastPointInd);
+            if (arr[lastPointInd].type == SEGMENT_START) {
+              lastBeginningInd++;
+              swap(arr, lastPointInd, lastBeginningInd);
+            }
+          }
+        }
+        return [k, j];
+      };
+
+      const quickSort3 = (arr = [], left = 0, right = arr.length - 1) => {
+        while (left < right) {
+          // const k = getRandomInt(left, right);
+          // swap(arr, left, k);
+          const [leftPivotInd, rigthPivotInd] = partition3(arr, left, right);
+          if (leftPivotInd - left < right - rigthPivotInd) {
+            quickSort3(arr, left, leftPivotInd - 1);
+            left = rigthPivotInd + 1;
+          } else {
+            quickSort3(arr, rigthPivotInd + 1, right);
+            right = leftPivotInd - 1;
+          }
+        }
+        return arr;
+      };
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+
+      describe('countIntersectionsWrapper simple tests', function () {
+        it(`Should be 1 0 0 for [0, 7], [5, 10], [1, 6, 11]`, function () {
+          assert.equal(countIntersectionsWrapper([0, 7], [5, 10], [1, 6, 11]), '1 0 0');
+        });
+
+        it(`Should be 0 for [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [3]`, function () {
+          assert.equal(countIntersectionsWrapper([1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [3]), '0');
+        });
+
+        it(`Should be 2 for [2, 2, 0, 0, -2, -2], [2, 2, 2, 2, -1, -1], [0]`, function () {
+          assert.equal(countIntersectionsWrapper([2, 2, 0, 0, -2, -2], [2, 2, 2, 2, -1, -1], [0]), '2');
+        });
+
+        it(`Should be 1 for [6, 8], [12, 10], [6]`, function () {
+          assert.equal(countIntersectionsWrapper([6, 8], [12, 10], [6]), '1');
+        });
+
+        it(`Should be 2 0 1 2 2 2 for [0, -3, 7, 10], [5, 2, 10, 10], [1, 6, -3, 2, 10, 10]`, function () {
+          assert.equal(countIntersectionsWrapper([0, -3, 7, 10], [5, 2, 10, 10], [1, 6, -3, 2, 10, 10]), '2 0 1 2 2 2');
+        });
+      });
+      mocha.run();
+    </script>
+  </body>
+</html>

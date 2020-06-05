@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      function parenthesis(numbers, operations) {
+        const len = numbers.length;
+        const M = Array.from({ length: len }).map((v, i) =>
+          Array.from({ length: len }).map((v, j) => {
+            if (i == j) return numbers[i];
+          })
+        );
+
+        const m = Array.from({ length: len }).map((v, i) =>
+          Array.from({ length: len }).map((v, j) => {
+            if (i == j) return numbers[i];
+          })
+        );
+
+        function MinMax(i, j) {
+          let min = Infinity;
+          let max = -Infinity;
+          for (let k = i; k < j; k++) {
+            const op = operations[k];
+            const a = op(M[i][k], M[k + 1][j]);
+            const b = op(m[i][k], M[k + 1][j]);
+            const c = op(M[i][k], m[k + 1][j]);
+            const d = op(m[i][k], m[k + 1][j]);
+            min = Math.min(min, a, b, c, d);
+            max = Math.max(max, a, b, c, d);
+          }
+          return [min, max];
+        }
+
+        let i, j;
+        for (let s = 1; s < len; s++) {
+          for (i = 0; (j = i + s), j < len; i++) {
+            [m[i][j], M[i][j]] = MinMax(i, j);
+          }
+        }
+
+        const operationsOrdered = [];
+
+        function getLastOperation(i, j, compareTo = M[i][j]) {
+          for (let s = i; s < j - 1; s++) {
+            const op = operations[s];
+            if (op(M[i][s], M[s + 1][j]) == compareTo) {
+              console.log(
+                'getLastOperation -> op(M[i][i+s], M[s + 1][j]) == compareTo',
+                op(M[i][s], M[s + 1][j]) == compareTo
+              );
+              getLastOperation(i, s, M[i][s]);
+              getLastOperation(s + 1, j, M[s + 1][j]);
+              operationsOrdered.push(s);
+              return;
+            }
+            if (op(m[i][s], M[s + 1][j]) == compareTo) {
+              console.log(
+                'getLastOperation -> op(m[i][i+s], M[s + 1][j]) == compareTo',
+                op(m[i][s], M[s + 1][j]) == compareTo
+              );
+              getLastOperation(i, s, m[i][s]);
+              getLastOperation(s + 1, j, M[s + 1][j]);
+              operationsOrdered.push(s);
+              return;
+            }
+            if (op(M[i][s], m[s + 1][j]) == compareTo) {
+              console.log(
+                'getLastOperation -> op(M[i][i+s], m[s + 1][j]) == compareTo',
+                op(M[i][s], m[s + 1][j]) == compareTo
+              );
+              getLastOperation(i, s, M[i][s]);
+              getLastOperation(s + 1, j, m[s + 1][j]);
+              operationsOrdered.push(s);
+              return;
+            }
+            if (op(m[i][s], m[s + 1][j]) == compareTo) {
+              console.log(
+                'getLastOperation -> op(m[i][i+s], m[s + 1][j]) == compareTo',
+                op(m[i][s], m[s + 1][j]) == compareTo
+              );
+              getLastOperation(i, s, m[i][s]);
+              getLastOperation(s + 1, j, m[s + 1][j]);
+              operationsOrdered.push(s);
+              return;
+            }
+          }
+        }
+
+        getLastOperation(0, len - 1);
+        operationsOrdered.reverse();
+        return M[0][len - 1];
+      }
+
+      function parenthesisWrapper(input) {
+        const [numbers, operations] = parseInput(input);
+        return parenthesis(numbers, operations);
+      }
+
+      const sum = (a, b) => a + b;
+      const sub = (a, b) => a - b;
+      const mul = (a, b) => a * b;
+
+      const parseOp = (char) => ({ '-': sub, '+': sum, '*': mul }[char]);
+
+      function parseInput(input) {
+        return input
+          .split('')
+          .reduce((r, c, ind) => (ind % 2 != 0 ? (r[1].push(parseOp(c)), r) : (r[0].push(Number(c)), r)), [[], []]);
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+      describe('parenthesisWrapper simple tests', function () {
+        it('Should give 200 for 5-8+7*4-8+9', function () {
+          assert.equal(parenthesisWrapper('5-8+7*4-8+9'), 200);
+        });
+        it('Should give 6 for 1+5', function () {
+          assert.equal(parenthesisWrapper('1+5'), 6);
+        });
+      });
+      mocha.run();
+    </script>
+  </body>
+</html>

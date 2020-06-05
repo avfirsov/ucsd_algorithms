@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      function lcs2Dic(str1 = [], str2 = [], sigma = 0, mu = 0) {
+        const len1 = str1.length;
+        const len2 = str2.length;
+        const D = Array.from({ length: len1 + 1 }).map((v, i) =>
+          Array.from({ length: len2 + 1 }).map((v, j) => {
+            if (i == 0) return 0;
+            if (j == 0) return 0;
+          })
+        );
+
+        for (let j = 1; j <= len2; j++) {
+          for (let i = 1; i <= len1; i++) {
+            D[i][j] = Math.max(
+              D[i][j - 1] - mu,
+              D[i - 1][j] - mu,
+              str1[i - 1] == str2[j - 1] ? D[i - 1][j - 1] + 1 : D[i - 1][j - 1] - sigma
+            );
+          }
+        }
+
+        let i = len1;
+        let j = len2;
+        let current = D[i][j];
+        console.log('D', D);
+        const seq = [];
+        while (current > 0) {
+          console.log('current', current);
+          console.log('D[i][j - 1]', D[i][j - 1]);
+          console.log('D[i - 1][j]', D[i - 1][j]);
+          console.log('D[i - 1][j - 1]', D[i - 1][j - 1]);
+          if (str1[i - 1] == str2[j - 1]) {
+            seq.push(str1[i - 1]);
+            i--;
+            j--;
+          } else if (current == D[i][j - 1] - mu) {
+            j--;
+          } else if (current == D[i - 1][j] - mu) {
+            i--;
+          } else {
+            console.log("'else'", 'else');
+          }
+          current = D[i][j];
+        }
+        seq.reverse();
+        console.log('seq', seq);
+        return seq;
+      }
+
+      function lcs3(str1 = [], str2 = [], str3 = [], sigma = 0, mu = 0) {
+        const len1 = str1.length;
+        const len2 = str2.length;
+        const len3 = str3.length;
+        const D = Array.from({ length: len1 + 1 }).map((v, i) =>
+          Array.from({ length: len2 + 1 }).map((v, j) =>
+            Array.from({ length: len3 + 1 }).map((v, k) => {
+              if (i == 0) return 0;
+              if (j == 0) return 0;
+              if (k == 0) return 0;
+            })
+          )
+        );
+
+        for (let k = 1; k <= len3; k++) {
+          for (let j = 1; j <= len2; j++) {
+            for (let i = 1; i <= len1; i++) {
+              D[i][j][k] = Math.max(
+                D[i][j - 1][k] - mu,
+                D[i][j][k - 1] - mu,
+                D[i - 1][j][k] - mu,
+                str1[i - 1] == str2[j - 1] && str1[i - 1] == str3[k - 1]
+                  ? D[i - 1][j - 1][k - 1] + 1
+                  : D[i - 1][j - 1][k - 1] - sigma
+              );
+            }
+          }
+        }
+        return D[len1][len2][len3];
+      }
+
+      const lcsN = (...sequences) => sequences.reduce((r, c) => console.log('r, c', r, c) || lcs2Dic(r, c));
+
+      const wrapper = (seq1, seq2, seq3) => {
+        console.log('wrapper -> seq1, seq2, seq3', seq1, seq2, seq3);
+        return [
+          [seq1, seq2, seq3],
+          [seq2, seq1, seq3],
+          [seq3, seq2, seq1],
+        ].reduce((r, c) => {
+          console.log('wrapper -> c', c);
+          const currentLCS = lcsN(...c);
+          console.log('wrapper -> currentLCS', currentLCS);
+          return currentLCS.length > r.length ? currentLCS : r;
+        }, []);
+      };
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+
+      describe('lcsN simple tests', function () {
+        it('Should give [1,3] for [1, 2, 3], [2,1,3], [1,3,5]', function () {
+          assert.deepEqual(wrapper([1, 2, 3], [2, 1, 3], [1, 3, 5]), [1, 3]);
+        });
+
+        it('Should give [8,3,7] for [8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]', function () {
+          assert.deepEqual(wrapper([8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]), [8, 3, 7]);
+        });
+        it('Should give [8,1,7] for [8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]', function () {
+          assert.deepEqual(wrapper([8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]), [8, 1, 7]);
+        });
+      });
+
+      describe('lcs3 simple tests', function () {
+        it('Should give 2 for [1, 2, 3], [2,1,3], [1,3,5]', function () {
+          assert.deepEqual(lcs3([1, 2, 3], [2, 1, 3], [1, 3, 5]), 2);
+        });
+
+        it('Should give 3 for [8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]', function () {
+          assert.deepEqual(lcs3([8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]), 3);
+        });
+        it('Should give 3 for [8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]', function () {
+          assert.deepEqual(lcs3([8, 3, 2, 1, 7], [8, 2, 1, 3, 8, 10, 7], [6, 8, 3, 1, 4, 7]), 3);
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>

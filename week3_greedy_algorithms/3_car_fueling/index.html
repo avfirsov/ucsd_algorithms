@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      const min = (distance, maxDistance, numberOfStops, ...stops) => {
+        let stopsCount = 0;
+        let lastStop = 0;
+        let lastStopInd;
+        let i = 0;
+        stops.push(distance)
+
+        while (i <= numberOfStops) {
+          if (stops[i] - lastStop > maxDistance) {
+            if (lastStopInd == i - 1) throw 'Impossible';
+            lastStop = stops[i - 1];
+            lastStopInd = i - 1;
+            stopsCount++;
+            i--;
+          }
+          i++;
+        }
+
+        return stopsCount;
+      };
+    </script>
+    <script>
+      mocha.setup('bdd');
+
+      // const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      // const getRandomBool = () => Boolean(getRandomInt(0, 100) >= 50);
+      // const getRandomElem = (arr) => arr[getRandomInt(0, arr.length - 1)];
+
+      var assert = chai.assert;
+
+      describe('min', function () {
+        it('simplest test', function () {
+          assert.equal(min(500, 200, 4, 100, 200, 300, 400), 2);
+        });
+      });
+      mocha.run();
+    </script>
+  </body>
+</html>

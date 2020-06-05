@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      function getDistance(str1 = '', str2 = '') {
+        const len1 = str1.length;
+        const len2 = str2.length;
+        const D = Array.from({ length: len1 + 1 }).map((v, i) =>
+          Array.from({ length: len2 + 1 }).map((v, j) => {
+            if (i == 0) return j;
+            if (j == 0) return i;
+          })
+        );
+
+        for (let j = 1; j <= len2; j++) {
+          for (let i = 1; i <= len1; i++) {
+            D[i][j] = Math.min(
+              D[i][j - 1] + 1,
+              D[i - 1][j] + 1,
+              str1[i - 1] == str2[j - 1] ? D[i - 1][j - 1] : D[i - 1][j - 1] + 1
+            );
+          }
+        }
+        return D[len1][len2];
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+
+      describe('getDistance simple tests', function () {
+        it('Should give 0 for ab, ab', function () {
+          assert.equal(getDistance('ab', 'ab'), 0);
+        });
+
+        it('Should give 3 for short, ports', function () {
+          assert.equal(getDistance('short', 'ports'), 3);
+        });
+
+        it('Should give 5 for editing, distance', function () {
+          assert.equal(getDistance('editing', 'distance'), 5);
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script>
+      'use strict';
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const swap = (arr, i, j) => void ([arr[i], arr[j]] = [arr[j], arr[i]]);
+
+      const freeze = (arr) => JSON.parse(JSON.stringify(arr));
+
+      const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);
+
+      function changeDP(value) {
+        return calcChangeDP(value, 1, 3, 4);
+      }
+
+      function calcChangeDP(value, ...coinsSet) {
+        const T = [0];
+        let i = 1;
+        for (; i <= value; i++) {
+          T[i] = coinsSet.reduce((r, currentDenomination) => {
+            const resultWithCurrentDenom = T[i - currentDenomination] + 1;
+            return r > resultWithCurrentDenom ? resultWithCurrentDenom : r;
+          }, Infinity);
+        }
+        return T[--i];
+      }
+    </script>
+    <script>
+      mocha.setup('bdd');
+      var assert = chai.assert;
+
+      describe('changeDP simple tests', function () {
+        it('Should give 2 for 2', function () {
+          assert.equal(changeDP(2), 2);
+        });
+
+        it('Should give 9 for 34', function () {
+          assert.equal(changeDP(34), 9);
+        });
+      });
+
+      mocha.run();
+    </script>
+  </body>
+</html>
